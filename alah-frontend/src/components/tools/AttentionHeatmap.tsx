@@ -20,63 +20,88 @@ export function AttentionHeatmap({ text, isLoading }: AttentionHeatmapProps) {
   const [selectedHead, setSelectedHead] = useState(0);
   const [attentionData, setAttentionData] = useState<AttentionData | null>(null);
 
-  // 模拟生成注意力数据
+  // 调用API生成注意力数据
   useEffect(() => {
     if (!text || isLoading) return;
 
-    // 改进的分词处理 - 支持中英文混合
-    const tokens = text.split('').filter(char => char.trim());
-    const tokenCount = Math.min(tokens.length, 24); // 增加显示的token数量
-    const displayTokens = tokens.slice(0, tokenCount);
-    
-    // 生成更真实的注意力矩阵
-    const attention: number[][] = [];
-    for (let i = 0; i < tokenCount; i++) {
-      attention[i] = [];
-      for (let j = 0; j < tokenCount; j++) {
-        let weight = 0;
+    const fetchAttentionData = async () => {
+      try {
+        const response = await fetch('/api/ai/attention', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text,
+            options: {
+              includeLayers: selectedLayer !== undefined ? [selectedLayer] : undefined,
+              includeHeads: selectedHead !== undefined ? [selectedHead] : undefined,
+            },
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('API request failed');
+        }
+
+        const apiData = await response.json();
         
-        // 自注意力权重（对角线附近）
-        if (i === j) {
-          weight = 0.8 + Math.random() * 0.2;
-        }
-        // 局部注意力模式（相邻token）
-        else if (Math.abs(i - j) === 1) {
-          weight = 0.4 + Math.random() * 0.3;
-        }
-        // 距离衰减注意力
-        else {
-          const distance = Math.abs(i - j);
-          const decay = Math.exp(-distance / 4);
-          weight = decay * (0.2 + Math.random() * 0.3);
+        // 转换API数据格式为组件需要的格式
+        const layerIndex = 0; // 使用第一层数据
+        const headIndex = 0;  // 使用第一个头数据
+        
+        setAttentionData({
+          tokens: apiData.tokens,
+          attention: apiData.attention[layerIndex] ? apiData.attention[layerIndex][headIndex] : [],
+          layers: apiData.layers,
+          heads: apiData.heads,
+        });
+      } catch (error) {
+        console.error('Failed to fetch attention data:', error);
+        
+        // 回退到模拟数据
+        const tokens = text.split('').filter(char => char.trim()).slice(0, 24);
+        const tokenCount = tokens.length;
+        
+        // 生成模拟注意力矩阵（简化版）
+        const attention: number[][] = [];
+        for (let i = 0; i < tokenCount; i++) {
+          attention[i] = [];
+          for (let j = 0; j < tokenCount; j++) {
+            let weight = 0;
+            if (i === j) {
+              weight = 0.8 + Math.random() * 0.2;
+            } else {
+              const distance = Math.abs(i - j);
+              const decay = Math.exp(-distance / 4);
+              weight = decay * (0.2 + Math.random() * 0.3);
+            }
+            
+            // 为不同的层和头添加变化
+            const layerVariation = Math.sin(selectedLayer * 0.5) * 0.2;
+            const headVariation = Math.cos(selectedHead * 0.3) * 0.15;
+            weight = Math.max(0, Math.min(1, weight + layerVariation + headVariation));
+            
+            attention[i][j] = weight;
+          }
           
-          // 添加一些随机的长距离依赖
-          if (Math.random() < 0.1 && distance > 3) {
-            weight += 0.3 + Math.random() * 0.4;
+          // 归一化
+          const sum = attention[i].reduce((a, b) => a + b, 0);
+          for (let j = 0; j < tokenCount; j++) {
+            attention[i][j] = attention[i][j] / sum;
           }
         }
-        
-        // 为不同的层和头添加变化
-        const layerVariation = Math.sin(selectedLayer * 0.5) * 0.2;
-        const headVariation = Math.cos(selectedHead * 0.3) * 0.15;
-        weight = Math.max(0, Math.min(1, weight + layerVariation + headVariation));
-        
-        attention[i][j] = weight;
-      }
-      
-      // 归一化每一行（softmax近似）
-      const sum = attention[i].reduce((a, b) => a + b, 0);
-      for (let j = 0; j < tokenCount; j++) {
-        attention[i][j] = attention[i][j] / sum;
-      }
-    }
 
-    setAttentionData({
-      tokens: displayTokens,
-      attention,
-      layers: 12, // 模拟12层
-      heads: 12,   // 增加到12个头
-    });
+        setAttentionData({
+          tokens,
+          attention,
+          layers: 12,
+          heads: 12,
+        });
+      }
+    };
+
+    fetchAttentionData();
   }, [text, isLoading, selectedLayer, selectedHead]);
 
   // 绘制热力图

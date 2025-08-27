@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { HallucinationTrainer } from '@/components/tools/hallucination/HallucinationTrainer';
+import { EnhancedHallucinationTrainer } from '@/components/tools/hallucination/EnhancedHallucinationTrainer';
 import { CaseLibrary } from '@/components/tools/hallucination/CaseLibrary';
 import { ProgressDashboard } from '@/components/tools/hallucination/ProgressDashboard';
 import {
@@ -11,16 +12,24 @@ import {
   PlayIcon,
 } from '@heroicons/react/24/outline';
 
-type Mode = 'training' | 'library' | 'progress';
+type Mode = 'training' | 'enhanced' | 'library' | 'progress';
 
 const modes = [
   {
     id: 'training' as const,
-    name: '训练模式',
+    name: '基础训练',
     description: '游戏化的幻觉检测练习，通过实战提高识别能力',
     icon: PlayIcon,
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
+  },
+  {
+    id: 'enhanced' as const,
+    name: 'AI增强训练',
+    description: '使用真实AI模型分析，获得专业级检测反馈',
+    icon: AcademicCapIcon,
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-50',
   },
   {
     id: 'library' as const,
@@ -47,6 +56,8 @@ export default function HallucinationDetectorPage() {
     switch (currentMode) {
       case 'training':
         return <HallucinationTrainer />;
+      case 'enhanced':
+        return <EnhancedHallucinationTrainer />;
       case 'library':
         return <CaseLibrary />;
       case 'progress':
@@ -77,7 +88,7 @@ export default function HallucinationDetectorPage() {
 
         {/* 模式选择 */}
         <div className="mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {modes.map((mode) => {
               const IconComponent = mode.icon;
               const isActive = currentMode === mode.id;
