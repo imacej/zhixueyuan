@@ -286,37 +286,86 @@ export function DecisionPath({ text, isLoading }: DecisionPathProps) {
   return (
     <div className="space-y-6">
       {/* 控制面板 */}
-      <div className="flex flex-wrap items-center justify-between p-4 bg-gray-50 rounded-lg">
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={isPlaying ? stopPlayback : startPlayback}
-            className={`px-4 py-2 rounded-md font-medium transition-colors ${
-              isPlaying
-                ? 'bg-red-500 text-white hover:bg-red-600'
-                : 'bg-primary-500 text-white hover:bg-primary-600'
-            }`}
-          >
-            {isPlaying ? '停止播放' : '开始播放'}
-          </button>
-          
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600">播放速度:</span>
-            <select
-              value={playbackSpeed}
-              onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
-              className="px-2 py-1 border border-gray-300 rounded text-sm"
-              disabled={isPlaying}
+      <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 rounded-lg border">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={isPlaying ? stopPlayback : startPlayback}
+              className={`px-6 py-2 rounded-lg font-medium transition-all transform hover:scale-105 ${
+                isPlaying
+                  ? 'bg-red-500 text-white hover:bg-red-600 shadow-lg'
+                  : 'bg-gradient-to-r from-primary-500 to-blue-600 text-white hover:from-primary-600 hover:to-blue-700 shadow-lg'
+              }`}
             >
-              <option value={0.5}>0.5x</option>
-              <option value={1}>1x</option>
-              <option value={1.5}>1.5x</option>
-              <option value={2}>2x</option>
-            </select>
+              {isPlaying ? '⏹️ 停止播放' : '▶️ 开始播放'}
+            </button>
+            
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-gray-700">⚡ 播放速度:</span>
+              <select
+                value={playbackSpeed}
+                onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-primary-500 focus:border-primary-500"
+                disabled={isPlaying}
+              >
+                <option value={0.5}>🐌 0.5x (慢速)</option>
+                <option value={1}>🚶 1x (正常)</option>
+                <option value={1.5}>🏃 1.5x (快速)</option>
+                <option value={2}>🚀 2x (极速)</option>
+              </select>
+            </div>
+
+            {isPlaying && (
+              <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg">
+                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-green-700 font-medium">播放中...</span>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white px-4 py-2 rounded-lg">
+            <div className="grid grid-cols-2 gap-6 text-sm">
+              <div className="text-center">
+                <div className="font-bold text-lg text-blue-600">
+                  {decisionSteps.reduce((sum, step) => sum + step.processing_time, 0)}ms
+                </div>
+                <div className="text-gray-600">总处理时间</div>
+              </div>
+              <div className="text-center">
+                <div className="font-bold text-lg text-purple-600">
+                  {decisionSteps.length}
+                </div>
+                <div className="text-gray-600">处理步骤</div>
+              </div>
+            </div>
           </div>
         </div>
-
-        <div className="text-sm text-gray-600">
-          总处理时间: {decisionSteps.reduce((sum, step) => sum + step.processing_time, 0)}ms
+        
+        {/* 步骤预览 */}
+        <div className="mt-4 flex flex-wrap gap-2">
+          <span className="text-sm text-gray-600 mr-2">步骤预览:</span>
+          {decisionSteps.map((step, index) => {
+            const config = stepTypeConfig[step.step_type];
+            const status = getStepStatus(index);
+            return (
+              <button
+                key={step.id}
+                onClick={() => {
+                  setSelectedStep(selectedStep === index ? null : index);
+                  setIsPlaying(false);
+                }}
+                className={`px-2 py-1 text-xs rounded-full border transition-colors ${
+                  status === 'completed' ? 'bg-green-500 text-white border-green-500' :
+                  status === 'current' ? 'bg-yellow-500 text-white border-yellow-500' :
+                  status === 'selected' ? 'bg-primary-500 text-white border-primary-500' :
+                  'bg-white text-gray-600 border-gray-300 hover:border-primary-300'
+                }`}
+                title={step.title}
+              >
+                {index + 1}. {config.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
