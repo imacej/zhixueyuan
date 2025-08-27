@@ -11,6 +11,7 @@ import {
   AcademicCapIcon,
   ChartBarIcon,
   UserCircleIcon,
+  Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/Button';
 
@@ -19,7 +20,7 @@ const navigation = [
   { name: '模型可视化', href: '/tools/visualization', icon: BeakerIcon },
   { name: '幻觉检测', href: '/tools/hallucination', icon: AcademicCapIcon },
   { name: '学习路径', href: '/learning-path', icon: ChartBarIcon },
-  { name: '技术追踪', href: '/tech-tracker', icon: ChartBarIcon },
+  { name: '系统设置', href: '/settings', icon: Cog6ToothIcon },
 ];
 
 function classNames(...classes: string[]) {

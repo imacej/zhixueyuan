@@ -11,6 +11,12 @@ import {
   APIError,
 } from '@/types/api';
 
+interface RequestOptions {
+  timeout?: number;
+  retries?: number;
+  fallbackToMock?: boolean;
+}
+
 class AIService {
   private defaultConfig: AIModelConfig = {
     name: 'GPT-3.5 Turbo',
@@ -20,14 +26,119 @@ class AIService {
     temperature: 0.7,
   };
 
+  private requestQueue = new Map<string, Promise<any>>();
+  private rateLimiter = new Map<string, number>();
+
+  // 获取用户配置的模型
+  private getActiveModels(): AIModelConfig[] {
+    try {
+      const saved = localStorage.getItem('alah_model_configs');
+      if (saved) {
+        const models = JSON.parse(saved);
+        return models.filter((m: any) => m.enabled && m.status === 'connected');
+      }
+    } catch (error) {
+      console.warn('Failed to load model configurations:', error);
+    }
+    return [this.defaultConfig];
+  }
+
+  // 选择最佳模型
+  private selectBestModel(capability?: string): AIModelConfig {
+    const activeModels = this.getActiveModels();
+    
+    if (activeModels.length === 0) {
+      return this.defaultConfig;
+    }
+
+    // 根据能力选择模型
+    if (capability) {
+      const capableModels = activeModels.filter(m => 
+        m.capabilities?.includes(capability) || m.provider === 'openai'
+      );
+      if (capableModels.length > 0) {
+        return capableModels[0];
+      }
+    }
+
+    return activeModels[0];
+  }
+
+  // 速率限制检查
+  private checkRateLimit(endpoint: string): boolean {
+    const key = `rate_limit_${endpoint}`;
+    const lastRequest = this.rateLimiter.get(key) || 0;
+    const now = Date.now();
+    
+    if (now - lastRequest < 1000) { // 1秒限制
+      return false;
+    }
+    
+    this.rateLimiter.set(key, now);
+    return true;
+  }
+
+  // 请求去重
+  private getRequestKey(endpoint: string, data: any): string {
+    return `${endpoint}_${JSON.stringify(data)}`;
+  }
+
   private async makeRequest<T>(
     endpoint: string,
     data: any,
-    config?: AIModelConfig
+    config?: AIModelConfig,
+    options: RequestOptions = {}
   ): Promise<T> {
-    const modelConfig = config || this.defaultConfig;
+    const {
+      timeout = 30000,
+      retries = 2,
+      fallbackToMock = true
+    } = options;
+
+    const modelConfig = config || this.selectBestModel();
+    const requestKey = this.getRequestKey(endpoint, data);
     
+    // 检查是否有相同的请求正在进行
+    if (this.requestQueue.has(requestKey)) {
+      return this.requestQueue.get(requestKey);
+    }
+
+    // 速率限制检查
+    if (!this.checkRateLimit(endpoint)) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
+    const requestPromise = this._executeRequest<T>(
+      endpoint, 
+      data, 
+      modelConfig, 
+      timeout, 
+      retries, 
+      fallbackToMock
+    );
+
+    this.requestQueue.set(requestKey, requestPromise);
+
     try {
+      const result = await requestPromise;
+      return result;
+    } finally {
+      this.requestQueue.delete(requestKey);
+    }
+  }
+
+  private async _executeRequest<T>(
+    endpoint: string,
+    data: any,
+    modelConfig: AIModelConfig,
+    timeout: number,
+    retries: number,
+    fallbackToMock: boolean
+  ): Promise<T> {
+    let lastError: Error | null = null;
+
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
       const response = await fetch(`/api/ai/${endpoint}`, {
         method: 'POST',
         headers: {
