@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useSession, signOut } from 'next-auth/react';
+// Placeholder for future auth implementation
 import { Disclosure } from '@headlessui/react';
 import {
   Bars3Icon,
@@ -27,7 +27,7 @@ function classNames(...classes: string[]) {
 }
 
 export function Navbar() {
-  const { data: session } = useSession();
+  const session = null; // Placeholder for future auth implementation
 
   return (
     <Disclosure as="nav" className="bg-white shadow-sm border-b">
@@ -75,7 +75,7 @@ export function Navbar() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => signOut()}
+                      onClick={() => console.log('logout')}
                     >
                       退出
                     </Button>
@@ -154,7 +154,7 @@ export function Navbar() {
                     个人资料
                   </Disclosure.Button>
                   <button
-                    onClick={() => signOut()}
+                    onClick={() => console.log('logout')}
                     className="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
                   >
                     退出

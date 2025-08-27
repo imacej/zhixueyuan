@@ -7,7 +7,8 @@ module.exports = {
       cwd: '/home/user/webapp/alah-frontend',
       env: {
         NODE_ENV: 'development',
-        PORT: 3000
+        PORT: 3000,
+        HOSTNAME: '0.0.0.0'
       },
       watch: false,
       ignore_watch: ['node_modules', '.next', '.git'],
