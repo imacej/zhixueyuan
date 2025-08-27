@@ -1,0 +1,87 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* 全局样式 */
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* 自定义组件样式 */
+.attention-heatmap {
+  @apply border rounded-lg p-4 bg-white shadow-sm;
+}
+
+.token-analysis {
+  @apply space-y-2;
+}
+
+.learning-card {
+  @apply bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow duration-200;
+}
+
+.progress-ring {
+  @apply transform -rotate-90;
+}
+
+.skill-radar {
+  @apply w-full h-64;
+}
+
+/* 动画效果 */
+.fade-in {
+  @apply opacity-0 animate-pulse-slow;
+}
+
+.slide-up {
+  @apply transform translate-y-4 opacity-0 transition-all duration-500;
+}
+
+.slide-up.active {
+  @apply translate-y-0 opacity-100;
+}
+
+/* 响应式设计 */
+@media (max-width: 640px) {
+  .skill-radar {
+    @apply h-48;
+  }
+}
